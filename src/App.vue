@@ -1,5 +1,7 @@
 <template>
-  <Home />
+  <div class="d-flex justify-center flex-column">
+    <Home />
+  </div>
 </template>
 
 <script>
@@ -8,10 +10,8 @@ import Home from "./views/Home.vue";
 export default {
   components: {
     Home
-  }  
-}
+  }
+};
 </script>
 
-<style lang="scss">
-
-</style>
+<style lang="scss"></style>
