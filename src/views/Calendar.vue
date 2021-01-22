@@ -1,12 +1,27 @@
 <template>
-  <div class="calendar-module d-flex flex-column justify-center">
-    <div class="d-flex justify-center">
-      <button title="Go to the previous month">◀</button>
-      <button title="Choose Today">Today</button>
-      <button title="Go to the next month">▶</button>
+  <div
+    class="calendar-module d-flex flex-column justify-center"
+    @click="setCalendar"
+  >
+    <div class="block--month-control d-flex justify-center">
+      <button
+        class="btn--prev-month"
+        title="Go to the previous month"
+        @click="handleClickToOtherMonth(-1)"
+      >
+        ◀
+      </button>
+      <button class="btn--go-today" title="Choose Today">Today</button>
+      <button
+        class="btn--next-month"
+        title="Go to the next month"
+        @click="handleClickToOtherMonth(1)"
+      >
+        ▶
+      </button>
     </div>
-    <div>
-      {{ initTime.year }}년 {{ initTime.month + 1 }}월 {{ initTime.date }}일
+    <div class="block--today">
+      {{ timeset.year }}년 {{ timeset.month + 1 }}월 {{ timeset.date }}일
     </div>
     <div class="calendar d-flex">
       <div class="calendar-days d-flex">
@@ -15,14 +30,15 @@
         </div>
       </div>
       <div
-        v-for="(day, index) in initTime.datesInThisMonth"
-        :key="`${initTime.year}${initTime.month}${day}`"
-        class="calendar-date"
-        :style="index === 0 && firstDayStyle"
-        @click="clickDate(initTime.year, initTime.month, day)"
         role="button"
+        class="calendar-date"
+        v-for="(date, index) in timeset.datesInThisMonth"
+        :key="`${timeset.year}${timeset.month}${date}`"
+        :style="index === 0 && timeset.firstDayStyle"
+        @click="handleClickDate(timeset.year, timeset.month, date)"
+        :class="{ clicked: date === +clicked }"
       >
-        {{ day }}
+        {{ date }}
       </div>
     </div>
   </div>
@@ -42,7 +58,19 @@ export default {
         "saturday"
       ],
       dueDate: {
+        time: null,
+        year: null,
+        month: null,
         date: null
+      },
+      clicked: null,
+      timeset: {
+        year: null,
+        month: null,
+        date: null,
+        datesInThisMonth: null,
+        firstDay: null,
+        firstDayStyle: null
       }
     };
   },
@@ -53,36 +81,58 @@ export default {
     getFirstDayOfMonth(year, month) {
       return new Date(year, month, 1).getDay();
     },
-    clickDate(year, month, date) {
-      const toNumber = new Date(year, month - 1, date);
-      this.dueDate.date = toNumber.getTime();
-      console.log(this.dueDate);
-    }
-  },
-  computed: {
-    initTime() {
-      const currentTime = new Date();
-      const init = {};
-
-      init.year = currentTime.getFullYear();
-      init.month = currentTime.getMonth();
-      init.date = currentTime.getDate();
-
-      init.datesInThisMonth = this.getDatesInMonth(init.year, init.month);
-
-      console.log(init);
-      return init;
+    handleClickDate(year, month, date) {
+      const toNumber = new Date(year, month, date);
+      this.dueDate.time = toNumber.getTime();
+      this.dueDate.year = toNumber.getFullYear();
+      this.dueDate.month = toNumber.getMonth();
+      this.dueDate.date = toNumber.getDate();
+      this.clicked = date;
     },
-    datesInThisMonth() {
-      return this.getDatesInMonth(this.initTime.year, this.initTime.month);
+    handleClickToOtherMonth(direction) {
+      if (direction === -1) {
+        if (this.timeset.month === 0) {
+          --this.timeset.year;
+          this.timeset.month = 11;
+        }
+
+        --this.timeset.month;
+      } else {
+        if (this.timeset.month === 11) {
+          ++this.timeset.year;
+          this.timeset.month = 0;
+        }
+
+        ++this.timeset.month;
+      }
+
+      console.log(this.timeset);
     },
-    firstDay() {
-      return this.getFirstDayOfMonth(this.initTime.year, this.initTime.month);
-    },
-    firstDayStyle() {
-      return {
-        marginLeft: `calc(${this.firstDay * 2}rem + 1px)`
-      };
+    setCalendar(year, month, date) {
+      let time;
+      const setfirstDayStyle = num => ({
+        marginLeft: `calc(${num * 2}rem + 1px)`
+      });
+
+      if (!year || !month || !date) {
+        time = new Date();
+      } else {
+        time = new Date(year, month, date);
+      }
+
+      this.timeset.year = time.getFullYear();
+      this.timeset.month = time.getMonth();
+      this.timeset.date = time.getDate();
+
+      this.timeset.datesInThisMonth = this.getDatesInMonth(
+        this.timeset.year,
+        this.timeset.month
+      );
+      this.timeset.firstDay = this.getFirstDayOfMonth(
+        this.timeset.year,
+        this.timeset.month
+      );
+      this.timeset.firstDayStyle = setfirstDayStyle(this.timeset.firstDay);
     }
   }
 };
@@ -98,6 +148,22 @@ export default {
   width: 16rem;
   margin: 0 auto;
   padding: 1rem 0;
+}
+
+.block--month-control > button {
+  border: 0;
+  background-color: transparent;
+  margin: 0 1rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.25rem;
+}
+
+.block--month-control > button:hover {
+  box-shadow: 0 0.25rem 0.3rem rgba(0, 0, 0, 0.25);
+}
+
+.block--today {
+  margin: 1rem 0;
 }
 
 .calendar {
@@ -119,7 +185,6 @@ export default {
   background-color: darkgreen;
   color: #fff;
   font-weight: bold;
-
 }
 
 .calendar-date {
@@ -128,6 +193,7 @@ export default {
 }
 
 .calendar-date.clicked {
-  background-color: wheat;
+  background-color: green;
+  color: #fff;
 }
 </style>
